@@ -393,14 +393,14 @@ class OrthoMaker:
 
                         else:
                             if (pix == 0.006):
-                                if (KAP < 95 and KAP > 85) or (KAP < -85 and KAP > -95) or (KAP < 185 and KAP > 175) or (KAP < -175 and KAP > -185):
+                                if (float(KAP) < 95 and float(KAP) > 85) or (float(KAP) < -85 and float(KAP) > -95) or (float(KAP) < 275 and float(KAP) > 265) or (float(KAP) < -265 and float(KAP) > -275):
                                     OSizeX = 2200
                                     OSizeY = 800
                                 else:
                                     OSizeX = 800
                                     OSizeY = 2200
                             elif (pix == 0.0052):
-                                if (KAP < 95 and KAP > 85) or (KAP < -85 and KAP > -95) or (KAP < 185 and KAP > 175) or (KAP < -175 and KAP > -185):
+                                if (float(KAP) < 95 and float(KAP) > 85) or (float(KAP) < -85 and float(KAP) > -95) or (float(KAP) < 275 and float(KAP) > 265) or (float(KAP) < -265 and float(KAP) > -275):
                                     OSizeX = 2500
                                     OSizeY = 900
                                 else:
