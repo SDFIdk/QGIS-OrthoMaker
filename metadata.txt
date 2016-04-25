@@ -10,7 +10,7 @@
 name=Ortho Maker
 qgisMinimumVersion=2.0
 description=Pluginn to calculate orthophotos from images and a DEM
-version=0.1
+version=1.0
 author=Andrew Flatman / sdfe.dk
 email=anfla@sdfe.dk
 
