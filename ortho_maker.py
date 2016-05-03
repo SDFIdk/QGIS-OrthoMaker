@@ -392,15 +392,16 @@ class OrthoMaker:
                             SZY = (TLY-LRY)/float(RES)
 
                         else:
+                            clipKAM = float(KAP) - float(CamRot)
                             if (pix == 0.006):
-                                if (float(KAP) < 95 and float(KAP) > 85) or (float(KAP) < -85 and float(KAP) > -95) or (float(KAP) < 275 and float(KAP) > 265) or (float(KAP) < -265 and float(KAP) > -275):
+                                if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
                                     OSizeX = 2200
                                     OSizeY = 800
                                 else:
                                     OSizeX = 800
                                     OSizeY = 2200
                             elif (pix == 0.0052):
-                                if (float(KAP) < 95 and float(KAP) > 85) or (float(KAP) < -85 and float(KAP) > -95) or (float(KAP) < 275 and float(KAP) > 265) or (float(KAP) < -265 and float(KAP) > -275):
+                                if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
                                     OSizeX = 2500
                                     OSizeY = 900
                                 else:
