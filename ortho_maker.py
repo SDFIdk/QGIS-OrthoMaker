@@ -276,6 +276,7 @@ class OrthoMaker:
 
                     #QMessageBox.information(None, "type", str(layer.geometryType()))
                     if (layer.geometryType() == 2):
+                        #QMessageBox.information(None,"geometritype","Polygon")
                         typen = "polygon"
                     elif (layer.geometryType() == 0):
                         typen = "punkt"
@@ -293,6 +294,7 @@ class OrthoMaker:
 
                     with open(self.dlg.lineEdit_workdir.text()+"\\"+self.dlg.inShapeA.currentText()+".bat", "w") as bat_file:
                         bat_file.write("cd "+(self.dlg.lineEdit_workdir.text()).replace('/','\\')+"\n")
+                        #bat_file.write("md jpeg")
 
                     for feat in selection:
 
@@ -397,15 +399,21 @@ class OrthoMaker:
                                 if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
                                     OSizeX = 2200
                                     OSizeY = 800
-                                else:
+                                elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
                                     OSizeX = 800
+                                    OSizeY = 2200
+                                else:
+                                    OSizeX = 2200
                                     OSizeY = 2200
                             elif (pix == 0.0052):
                                 if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
                                     OSizeX = 2500
                                     OSizeY = 900
-                                else:
+                                elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
                                     OSizeX = 900
+                                    OSizeY = 2500
+                                else:
+                                    OSizeX = 2500
                                     OSizeY = 2500
                             TLX = float(X_0) - (OSizeX/2)
                             TLY = float(Y_0) + (OSizeY/2)
@@ -471,11 +479,28 @@ class OrthoMaker:
                             text_file.write("MBF= 870"+" \n")
                             text_file.write("BBF= 999999"+" \n")
                             text_file.write("STR= NO"+" \n")
+
+                            if typen == "polygon" and self.dlg.checkBox_bbox.isChecked():
+                                for punktliste in Geometri:
+                                    text_file.write("BPL= "+str(len(punktliste))+" 0"+" \n")
+                                    punktnummer = 0
+                                    for punkt in punktliste:
+                                        punktnummer = punktnummer + 1
+                                        text_file.write("BP"+str(punktnummer)+"= "+str(punkt.x())+" "+str(punkt.y())+" \n")
+
+
+
                             text_file.close()
 
                     with open(self.dlg.lineEdit_workdir.text()+"\\"+self.dlg.inShapeA.currentText()+".bat", "a") as bat_file:
                         bat_file.write("gdalbuildvrt "+ self.dlg.outDir.text()+ "\\" + self.dlg.inShapeA.currentText() + ".vrt " + self.dlg.outDir.text()+ "\\*.tif" + "\n")
                         bat_file.write("gdaladdo "+ self.dlg.outDir.text()+ "\\"+ self.dlg.inShapeA.currentText() + ".vrt " +" -r average -ro --config GDAL_CACHEMAX 900 --config COMPRESS_OVERVIEW JPEG --config JPEG_QUALITY_OVERVIEW 85 --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL --config BIGTIFF_OVERVIEW YES 2 4 10 25 50 100 200 500 1000" + "\n")
+                        if self.dlg.checkBoxDelTiff.isChecked():
+                            pass
+                        else:
+                            bat_file.write("gdalbuildvrt -srcnodata \"0 0 0\" "+ self.dlg.outDir.text() + ".vrt " + self.dlg.outDir.text()+ "\\*.tif" + "\n")
+
+
 
                     QMessageBox.information(None, "Settings", "DEF and Batfile created. \n\nPlease run "+self.dlg.lineEdit_workdir.text()+"\\"+self.dlg.inShapeA.currentText()+".bat from a OSGEO4W shell" )
 

@@ -194,7 +194,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Use shape geometry as BBox</string>
+     <string>clip to geometry</string>
     </property>
    </widget>
   </widget>
