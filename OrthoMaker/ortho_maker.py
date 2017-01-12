@@ -17,8 +17,6 @@
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon
@@ -35,6 +33,7 @@ import math
 import resources
 # Import the code for the dialog
 from ortho_maker_dialog import OrthoMakerDialog
+from ortho_maker_settings import OrthoMakerSettings, OrthoMakerSettingsDialog
 import os.path
 
 
@@ -76,6 +75,10 @@ class OrthoMaker:
 
         self.toolbar = self.iface.addToolBar(u'OrthoMaker')
         self.toolbar.setObjectName(u'OrthoMaker')
+
+        # Settings dialog etc.
+        self.settings = OrthoMakerSettings()
+        self.settings_dlg = OrthoMakerSettingsDialog(self.settings)
 
         self.dlg.pushButton_Input.clicked.connect(self.showFileSelectDialogInput)
         self.dlg.pushButton_Output.clicked.connect(self.showFileSelectDialogOutput)
@@ -224,8 +227,17 @@ class OrthoMaker:
             icon_path,
             text=self.tr(u'Calculate Ortho Photos'),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            add_to_menu=True,
+            parent=self.iface.mainWindow()
+        )
 
+        self.add_action(
+            None,
+            text=self.tr(u'Settings'),
+            add_to_toolbar=False,
+            callback=self.open_settings,
+            parent=self.iface.mainWindow()
+        )
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -237,6 +249,8 @@ class OrthoMaker:
         # remove the toolbar
         del self.toolbar
 
+    def open_settings(self):
+        self.settings_dlg.show()
 
     def run(self):
         """Run method that performs all the real work"""
@@ -260,8 +274,17 @@ class OrthoMaker:
         if result:
             import subprocess
             import psycopg2
-            #layer = self.inShapeA.currentText()
-            conn = psycopg2.connect("dbname='***REMOVED***' user='***REMOVED***' host='***REMOVED***' password='***REMOVED***'")
+
+            conn = psycopg2.connect(
+                "dbname={name} user={user} host={host} password={pswd} port={port}".format(
+                    name=self.settings.value('database'),
+                    user=self.settings.value('username'),
+                    host=self.settings.value('hostname'),
+                    pswd=self.settings.value('password'),
+                    port=self.settings.value('port'),
+                )
+            )
+
             cur = conn.cursor()
 
             inputFilNavn = self.dlg.inShapeA.currentText()
