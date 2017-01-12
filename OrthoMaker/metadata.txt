@@ -9,15 +9,15 @@
 [general]
 name=Ortho Maker
 qgisMinimumVersion=2.0
-description=Pluginn to calculate orthophotos from images and a DEM
-version=1.1
+description=Plugin to calculate orthophotos from images and a DEM
+version=1.2
 author=Andrew Flatman / sdfe.dk
 email=anfla@sdfe.dk
 
 about=This plugin enables the user to make ortho photos fra aerial images. To work the plugin requires aerial images, camera orientations camera parameters, and an elevation moden. Imagers must be in a GDAL readable format. Camera orientations must contain: X,Y,Z,Omega,Phi,Kappa. Camera parameters must contain: Focal length, PPAx, PPAy, Pixel size, Image plane size x, Image plane size y. Images from Vexcel have been calculated.
 
-tracker=Bitbucket
-repository=Bitbucket
+tracker=https://github.com/Kortforsyningen/QGIS-OrthoMaker/issues
+repository=https://github.com/Kortforsyningen/QGIS-OrthoMaker
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=Bitbucket
 # Tags are comma separated with spaces allowed
 tags=
 
-homepage=
+homepage=https://github.com/Kortforsyningen/QGIS-OrthoMaker
 category=Plugins
 icon=icon.png
 # experimental flag
