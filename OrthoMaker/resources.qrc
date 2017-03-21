@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/plugins/OrthoMaker" >
         <file>icon.png</file>
+        <file>fld.png</file>
     </qresource>
 </RCC>

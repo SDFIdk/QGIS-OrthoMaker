@@ -194,7 +194,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Use shape geometry as BBox</string>
+     <string>clip to geometry</string>
     </property>
    </widget>
   </widget>
@@ -338,9 +338,9 @@
   <widget class="QLineEdit" name="lineEditPixelSize">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>90</x>
      <y>510</y>
-     <width>51</width>
+     <width>41</width>
      <height>20</height>
     </rect>
    </property>
@@ -349,7 +349,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>570</y>
+     <y>580</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -375,7 +375,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>570</y>
+     <y>580</y>
      <width>231</width>
      <height>20</height>
     </rect>
@@ -385,13 +385,49 @@
    <property name="geometry">
     <rect>
      <x>330</x>
-     <y>570</y>
+     <y>580</y>
      <width>31</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
     <string>...</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>540</y>
+     <width>46</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>degrees</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>540</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Kappa limit</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditImageAngle">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>540</y>
+     <width>41</width>
+     <height>20</height>
+    </rect>
    </property>
   </widget>
  </widget>
