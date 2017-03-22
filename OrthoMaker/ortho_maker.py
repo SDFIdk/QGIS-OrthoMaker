@@ -93,7 +93,7 @@ class OrthoMaker:
         self.dlg.radioButton_fieldpath.toggle()
         self.dlg.checkBoxDelTiff.setCheckState(Qt.Checked)
 
-        self.fdl.outDir.setText('F:/GEO\DATA/RemoteSensing/Drift/ForaarsFoto/FotoFlyv_2016/QuickOrto')
+        self.fdl.outDir.setText('F:/GEO\DATA/RemoteSensing/Drift/ForaarsFoto/FotoFlyv_2017/QuickOrto')
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
