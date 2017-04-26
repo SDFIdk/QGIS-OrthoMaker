@@ -24,6 +24,7 @@ repository=https://github.com/Kortforsyningen/QGIS-OrthoMaker
 
 # Uncomment the following line and add your changelog:
 changelog=
+    2017-04-26 1.11 support for Vexcel 4.2um sensor
     2017-03-22 1.10 Moving from Bitbucket to Github
     2016-06-27 1.9 Erroneous PPA fixed
     2016-06-03 1.8 Image angle limit added

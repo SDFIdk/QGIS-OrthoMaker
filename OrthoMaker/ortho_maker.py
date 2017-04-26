@@ -446,6 +446,28 @@ class OrthoMaker:
                                 else:
                                     OSizeX = 2500
                                     OSizeY = 2500
+                            elif (pix == 0.0046):
+                                if (clipKAM > -630 - usersetangle and clipKAM < -630 + usersetangle) or (
+                                        clipKAM > -450 - usersetangle and clipKAM < -450 + usersetangle) or (
+                                        clipKAM > -270 - usersetangle and clipKAM < -270 + usersetangle) or (
+                                        clipKAM > -90 - usersetangle and clipKAM < -90 + usersetangle) or (
+                                        clipKAM > 90 - usersetangle and clipKAM < 90 + usersetangle) or (
+                                        clipKAM > 270 - usersetangle and clipKAM < 270 + usersetangle):
+                                    # if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
+                                    OSizeX = 2800
+                                    OSizeY = 1000
+                                elif (clipKAM > -720 - usersetangle and clipKAM < -720 + usersetangle) or (
+                                        clipKAM > -540 - usersetangle and clipKAM < -540 + usersetangle) or (
+                                        clipKAM > -360 - usersetangle and clipKAM < -360 + usersetangle) or (
+                                        clipKAM > -180 - usersetangle and clipKAM < -180 + usersetangle) or (
+                                        clipKAM > 0 - usersetangle and clipKAM < 0 + usersetangle) or (
+                                        clipKAM > 180 - usersetangle and clipKAM < 180 + usersetangle):
+                                    # elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
+                                    OSizeX = 1000
+                                    OSizeY = 2800
+                                else:
+                                    OSizeX = 2800
+                                    OSizeY = 2800
                             TLX = float(X_0) - (OSizeX / 2)
                             TLY = float(Y_0) + (OSizeY / 2)
                             LRX = float(X_0) + (OSizeX / 2)
@@ -454,46 +476,33 @@ class OrthoMaker:
                             SZX = OSizeX / float(RES)
                             SZY = OSizeY / float(RES)
 
-                        with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat",
-                                  "a") as bat_file:
+                        with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat","a") as bat_file:
                             defnr = defnr + 1
                             # bat_file.write("@echo *** Calculating DEF file " + str(defnr) + " of " + antaldef + " ***\n")
 
                             # ***  processingmanager info ***
-                            bat_file.write(
-                                'ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^> ' + str(
-                                    nummernu) + ' of ' + str(
-                                    totalantal) + ' ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
-                            bat_file.write('ftp -i -s:u.ftp\n')
+                            pdone = int(float(nummernu)/float(totalantal)*100)
+                            print pdone
+                            bat_file.write('python C:/temp/writeProgress.py ' + self.dlg.inShapeA.currentText() + " " + str(pdone) + " \n")
+                            #bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^> ' + str(nummernu) + ' of ' + str(totalantal) + ' ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                            #bat_file.write('ftp -i -s:u.ftp\n')
 
                             # ***  Creating BAT file ***
 
                             if self.dlg.radioButtonDEM_2007.isChecked():
-                                bat_file.write(
-                                    "gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(
-                                        TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
-                                        LRY - (float(
-                                            RES) * 20)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                 # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
                             elif self.dlg.radioButtonDEM_2015.isChecked():
-                                bat_file.write(
-                                    "gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(
-                                        TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
-                                        LRY - (float(
-                                            RES) * 20)) + " F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                 # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\Kms.adroot.dk\dhm2007-server\DHM-E\samlet_20150409.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
                             else:
                                 pass
 
-                            bat_file.write(os.path.dirname(
-                                __file__) + "\\orto.exe -def " + self.dlg.outDir.text() + "\\" + ImageID + ".def\n")
-                            bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/',
-                                                                                               '\\') + "\\DTM_" + ImageID + ".*\n")
-                            bat_file.write(
-                                "gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
+                            bat_file.write(os.path.dirname(__file__) + "\\orto.exe -def " + self.dlg.outDir.text() + "\\" + ImageID + ".def\n")
+                            bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/','\\') + "\\DTM_" + ImageID + ".*\n")
+                            bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
                             if self.dlg.checkBoxDelTiff.isChecked():
-                                bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/',
-                                                                                                   '\\') + "\\O" + ImageID + ".*\n")
+                                bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/','\\') + "\\O" + ImageID + ".*\n")
 
                         # write DEF file
                         with open(self.dlg.outDir.text() + "\\" + ImageID + ".def", "w") as text_file:
@@ -550,23 +559,20 @@ class OrthoMaker:
 
                             text_file.close()
 
-                    with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat",
-                              "a") as bat_file:
-                        bat_file.write(
-                            'ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Building VRT ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
-                        bat_file.write('ftp -i -s:u.ftp\n')
-                        bat_file.write(
-                            "gdalbuildvrt " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + self.dlg.outDir.text() + "\\*.tif" + "\n")
+                    with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat","a") as bat_file:
+                        #bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Building VRT ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                        #bat_file.write('ftp -i -s:u.ftp\n')
+                        bat_file.write("python C:/temp/writeProgress.py Building_VRT 0"+ "\n")
+                        bat_file.write("gdalbuildvrt " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + self.dlg.outDir.text() + "\\*.tif" + "\n")
 
-                        bat_file.write(
-                            'ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Adding Overlays ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
-                        bat_file.write('ftp -i -s:u.ftp\n')
-                        bat_file.write(
-                            "gdaladdo " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + " -r average -ro --config GDAL_CACHEMAX 900 --config COMPRESS_OVERVIEW JPEG --config JPEG_QUALITY_OVERVIEW 85 --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL --config BIGTIFF_OVERVIEW YES 2 4 10 25 50 100 200 500 1000" + "\n")
+                        #bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Adding Overlays ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                        #bat_file.write('ftp -i -s:u.ftp\n')
+                        bat_file.write("python C:/temp/writeProgress.py Adding_Overlay 0"+ "\n")
+                        bat_file.write("gdaladdo " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + " -r average -ro --config GDAL_CACHEMAX 900 --config COMPRESS_OVERVIEW JPEG --config JPEG_QUALITY_OVERVIEW 85 --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL --config BIGTIFF_OVERVIEW YES 2 4 10 25 50 100 200 500 1000" + "\n")
 
-                        bat_file.write(
-                            'ECHO ^<p/^>^<font color="green"^>^<b^>Procesing: ^</b^>^<font color="black"^>Procesing complete ^</b^>^<font color="black"^>^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
-                        bat_file.write('ftp -i -s:u.ftp\n')
+                        #bat_file.write('ECHO ^<p/^>^<font color="green"^>^<b^>Procesing: ^</b^>^<font color="black"^>Procesing complete ^</b^>^<font color="black"^>^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                        #bat_file.write('ftp -i -s:u.ftp\n')
+                        bat_file.write("python C:/temp/writeProgress.py Processing_Done 100"+ "\n")
 
                         if self.dlg.checkBoxDelTiff.isChecked():
                             pass
