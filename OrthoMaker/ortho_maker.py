@@ -293,10 +293,9 @@ class OrthoMaker:
                     totalantal = layer.selectedFeatureCount()
                     nummernu = 0
 
-                    with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat",
-                              "w") as bat_file:
+                    with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat","w") as bat_file:
                         bat_file.write("cd " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\n")
-                        # bat_file.write("md jpeg")
+                        bat_file.write("md jpeg")
 
                     for feat in selection:
 
@@ -476,14 +475,15 @@ class OrthoMaker:
                             SZX = OSizeX / float(RES)
                             SZY = OSizeY / float(RES)
 
-                        with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat","a") as bat_file:
+                        with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat", "a") as bat_file:
                             defnr = defnr + 1
                             # bat_file.write("@echo *** Calculating DEF file " + str(defnr) + " of " + antaldef + " ***\n")
 
                             # ***  processingmanager info ***
+                            jobnavn = ImageID[5:10]
                             pdone = int(float(nummernu)/float(totalantal)*100)
-                            print pdone
-                            bat_file.write('python C:/temp/writeProgress.py ' + self.dlg.inShapeA.currentText() + " " + str(pdone) + " \n")
+                            #print pdone
+                            bat_file.write('python C:/temp/writeProgress.py ' + jobnavn + " " + str(pdone) + " \n")
                             #bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^> ' + str(nummernu) + ' of ' + str(totalantal) + ' ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
                             #bat_file.write('ftp -i -s:u.ftp\n')
 
@@ -572,7 +572,7 @@ class OrthoMaker:
 
                         #bat_file.write('ECHO ^<p/^>^<font color="green"^>^<b^>Procesing: ^</b^>^<font color="black"^>Procesing complete ^</b^>^<font color="black"^>^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
                         #bat_file.write('ftp -i -s:u.ftp\n')
-                        bat_file.write("python C:/temp/writeProgress.py Processing_Done 100"+ "\n")
+                        bat_file.write("python C:/temp/writeProgress.py Processing_Done 101"+ "\n")
 
                         if self.dlg.checkBoxDelTiff.isChecked():
                             pass
