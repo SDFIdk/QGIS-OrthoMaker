@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>228</height>
+    <width>411</width>
+    <height>289</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>190</y>
+     <y>250</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>371</width>
-     <height>171</height>
+     <height>231</height>
     </rect>
    </property>
    <property name="title">
@@ -45,7 +45,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>80</y>
+      <y>140</y>
       <width>70</width>
       <height>13</height>
      </rect>
@@ -58,7 +58,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>80</y>
+      <y>170</y>
       <width>241</width>
       <height>20</height>
      </rect>
@@ -68,7 +68,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>110</y>
+      <y>140</y>
       <width>241</width>
       <height>20</height>
      </rect>
@@ -78,7 +78,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>110</y>
+      <y>170</y>
       <width>70</width>
       <height>20</height>
      </rect>
@@ -137,7 +137,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>140</y>
+      <y>200</y>
       <width>241</width>
       <height>20</height>
      </rect>
@@ -147,13 +147,59 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>140</y>
+      <y>200</y>
       <width>70</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
      <string>Port</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="schema_label_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>80</y>
+      <width>70</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Schema</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="schema">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>80</y>
+      <width>241</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="table_label_3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>70</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Table</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="table">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>110</y>
+      <width>241</width>
+      <height>20</height>
+     </rect>
     </property>
    </widget>
   </widget>

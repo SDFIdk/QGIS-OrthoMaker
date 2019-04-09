@@ -27,6 +27,8 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 from qgis.utils import *
+import getpass
+import socket
 
 import ftools_utils
 import sys
@@ -39,6 +41,7 @@ from ortho_maker_file_dialog import OrthoMakerFileDialog
 from ortho_maker_settings import OrthoMakerSettings, OrthoMakerSettingsDialog
 import os.path
 
+import remote_sensing as rs
 
 class OrthoMaker:
     """QGIS Plugin Implementation."""
@@ -143,6 +146,14 @@ class OrthoMaker:
             if f.type() == QVariant.Int or f.type() == QVariant.String:
                 self.dlg.inField1.addItem(unicode(f.name()))
 
+    def update_ortonamefield(self, inputLayer):
+        self.dlg.ortonamefield.clear()
+        changedLayer = ftools_utils.getVectorLayerByName(unicode(inputLayer))
+        changedField = ftools_utils.getFieldList(changedLayer)
+        for f in changedField:
+            if f.type() == QVariant.Int or f.type() == QVariant.String:
+                self.dlg.ortonamefield.addItem(unicode(f.name()))
+
     def showFileSelectDialogInput(self):
         self.dlg.radioButton_txtpath.toggle()
         fname = QFileDialog.getOpenFileName(None, 'Read File', self.dlg.inDir.text(),
@@ -219,13 +230,292 @@ class OrthoMaker:
     def open_settings(self):
         self.settings_dlg.show()
 
+
     def run(self):
+        #*** New Ortomaker ***
+        self.dlg.show()
+
+        CHKuser = getpass.getuser()
+        maskinenavn = (socket.gethostname())
+        basepath = 'F:\\JOB\\DATA\\RemoteSensing\\Drift\\GRU\\orto_bat_files\\'
+
+        QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.checkA)
+        QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.update1)
+        QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.update_ortonamefield)
+        self.dlg.setWindowTitle(self.tr("Make Ortho"))
+        # populate layer list
+        self.dlg.progressBar.setValue(0)
+        mapCanvas = self.iface.mapCanvas()
+        lyrs = self.iface.legendInterface().layers()
+        lyr_list = []
+        for layer in lyrs:
+            lyr_list.append(layer.name())
+        self.dlg.inShapeA.clear()
+        self.dlg.inShapeA.addItems(lyr_list)
+
+        self.dlg.progressBar.hide()
+
+        # Run the dialog event loop
+        result = self.dlg.exec_()
+        # See if OK was pressed
+        if result:
+            # See if OK was pressed
+            if result:
+
+                inputFilNavn = self.dlg.inShapeA.currentText()
+                canvas = self.iface.mapCanvas()
+                allLayers = canvas.layers()
+
+                for i in allLayers:
+                    # QMessageBox.information(None, "test input", i.name())
+                    if (i.name() == inputFilNavn):
+                        layer = i
+
+                        # QMessageBox.information(None, "type", str(layer.geometryType()))
+                        if (layer.geometryType() == 2):
+                            # QMessageBox.information(None,"geometritype","Polygon")
+                            typen = "polygon"
+                        elif (layer.geometryType() == 0):
+                            typen = "punkt"
+                        elif (layer.geometryType() == 1):
+                            typen = "linie"
+
+                        if self.dlg.useSelectedA.isChecked():
+                            selection = layer.selectedFeatures()
+                            totalantal = layer.selectedFeatureCount()
+                            QMessageBox.information(None, "status", "creating DEF for " + str(totalantal) + " selected features")
+                        else:
+                            selection = layer.getFeatures()
+                            totalantal = layer.featureCount()
+                            QMessageBox.information(None, "status", "creating DEF for all " + str(totalantal) + " features")
+
+                        defnr = 0
+                        nummernu = 0
+                        Z=0
+
+                        with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat", "w") as bat_file:
+                            bat_file.write("cd " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\n")
+
+                        for feat in selection:
+
+                            geom = feat.geometry()
+                            nummernu = nummernu + 1
+
+                            if (typen == "polygon"):
+                                Geometri = geom.asPolygon()
+                            elif (typen == "punkt"):
+                                Geometri = geom.asPoint()
+                            else:
+                                Geometri = geom.asLine()
+
+                            # ImageID = feat['ImageID']
+                            ImageID = feat[self.dlg.ortonamefield.currentText()]
+
+                            if self.dlg.radioButton_fieldpath.isChecked():
+                                #text_file.write("IMG= " + str(feat[self.dlg.inField1.currentText()]) + "/" + ImageID + ".tif" + " \n")
+                                #text_file.write("IMG= " + str.replace(str.replace(str(feat[self.dlg.inField1.currentText()]),"_JPEG","_TIFF"),".jpg",".tif") + " \n")
+                                if ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg'):
+                                    imgpath = + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif"
+                                else:
+                                    imgpath = str(feat[self.dlg.inField1.currentText()])
+                            else:
+                                imgpath = os.path.dirname(self.dlg.inDir.text()) + "/" + ImageID + ".tif"
+
+
+
+                            # imgpath = os.path.dirname(self.dlg.inDir.text()) + "/" + ImageID + ".tif"
+                            RES = self.dlg.lineEditPixelSize.text()
+                            OName = "O" + ImageID + ".tif"
+                            defName = self.dlg.outDir.text() + "\\" + ImageID + ".def"
+                            ortName = self.dlg.lineEdit_workdir.text() + "\\" + OName
+                            DEMpath = self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc"
+
+                            geo = feat.geometry()
+                            cameraID = feat["cameraid"]
+                            imageDate = feat["TimeUTC"]
+                            try:
+                                coneID = feat["ConeID"]
+                            except:
+                                coneID = '0'
+                            IO = rs.getIO(cameraID, coneID,imageDate)
+                            pix = IO[3]
+                            dimX = IO[4]*-2/pix
+                            dimY = IO[5]*-2/pix
+
+                            filnavn = feat["imageid"]
+                            X0 = feat["easting"]
+                            Y0 = feat["northing"]
+                            Z0 = feat["height"]
+                            Ome = feat["omega"]
+                            Phi = feat["phi"]
+                            Kap = feat["kappa"]
+
+
+                            EO = [X0, Y0, Z0, Ome, Phi, Kap]
+
+                            # QO footprint
+                            if self.dlg.checkBox_bbox.isChecked():
+                                #QMessageBox.information(None, "Settings","benytter footprint shp")
+                                TLX = int(round((geom.boundingBox().xMinimum() / float(RES)), 0) * float(RES))
+                                TLY = int(round((geom.boundingBox().yMaximum() / float(RES)), 0) * float(RES))
+
+                                LRX = int(round((geom.boundingBox().xMaximum() / float(RES)), 0) * float(RES))
+                                LRY = int(round((geom.boundingBox().yMinimum() / float(RES)), 0) * float(RES))
+
+                                UL = [TLX, TLY]
+                                UR = [LRX,TLY]
+                                LR = [LRX,LRY]
+                                LL = [TLX,LRY]
+
+                                #UL = rs.ray(IO, EO, Z, 0 , 0)
+                                #UR = rs.ray(IO, EO, Z, 0 , dimY)
+                                #LR = rs.ray(IO, EO, Z, dimX , dimY)
+                                #LL = rs.ray(IO, EO, Z, dimX , 0)
+                            else:
+                                if (dimX < dimY):
+                                    UL = rs.ray(IO, EO, Z, dimX * 0.25, dimY * 0.07)
+                                    UR = rs.ray(IO, EO, Z, dimX * 0.25, dimY * 0.93)
+                                    LR = rs.ray(IO, EO, Z, dimX * 0.75, dimY * 0.93)
+                                    LL = rs.ray(IO, EO, Z, dimX * 0.75, dimY * 0.07)
+                                else:
+                                    UL = rs.ray(IO, EO, Z, dimX * 0.07, dimY * 0.25)
+                                    UR = rs.ray(IO, EO, Z, dimX * 0.07, dimY * 0.75)
+                                    LR = rs.ray(IO, EO, Z, dimX * 0.93, dimY * 0.75)
+                                    LL = rs.ray(IO, EO, Z, dimX * 0.93, dimY * 0.25)
+
+                            Polyg = [(UL[0], UL[1]), (UR[0], UR[1]), (LR[0], LR[1]), (LL[0], LL[1])]
+                            #QMessageBox.information(None, "Settings", str(Polyg))
+
+                            if self.dlg.checkBoxGoGoMinions.isChecked():
+                                orto_batfil = basepath + filnavn + '.bat'
+                                defName = basepath + filnavn + '.def'
+
+                            else:
+                                orto_batfil = self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat"
+
+                            if self.dlg.checkBoxGoGoMinions.isChecked():
+                                with open(orto_batfil, "w") as bat_file:
+                                    defnr = defnr + 1
+
+                                    # ***  processingmanager info ***
+                                    jobnavn = ImageID[5:10]
+                                    pdone = int(float(nummernu) / float(totalantal) * 100)
+                                    bat_file.write('python C:/temp/writeProgress.py ' + jobnavn + " " + str(pdone) + " \n")
+
+                                    bbox = rs.BoundingBox(Polyg)
+                                    TLX = int(round((bbox[0] / float(RES)), 0) * float(RES))
+                                    TLY = int(round((bbox[3] / float(RES)), 0) * float(RES))
+                                    LRX = int(round((bbox[1] / float(RES)), 0) * float(RES))
+                                    LRY = int(round((bbox[2] / float(RES)), 0) * float(RES))
+                                    BoBox = QgsGeometry.fromWkt('MULTIPOLYGON (((' + str(TLX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(TLY) + ')))')
+                                    bat_file.write("cd c:\\temp \n")
+                                    bat_file.write("net use P: /delete\n")
+                                    bat_file.write("net use P: \\\\10.48.196.223\\Peta_Lager_3 rs@1809GEOD /user:PROD\\b025527 /persistent:yes\n")
+                                    bat_file.write("net use X: /delete\n")
+                                    bat_file.write("net use X: \\\\10.48.195.15\\Data_4 rs@1809GEOD /user:PROD\\b025527 /persistent:yes\n")
+                                    bat_file.write("net use Y: /delete\n")
+                                    bat_file.write("net use Y: \\\\10.48.196.73\\Data_1 rs@1809GEOD /user:PROD\\b025527 /persistent:yes\n")
+                                    bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                    bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
+                                    bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
+                                    bat_file.write("REM *** Move Output *** \n")
+                                    if self.dlg.checkBoxMinionsOut.isChecked():
+                                        bat_file.write("move " + self.dlg.outDir.text() + "\\" + OName + " F:\\JOB\\DATA\\RemoteSensing\\Drift\\GRU\\orto_output \n")
+                                    bat_file.write("REM *** CleanUP *** \n")
+                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\DTM_" + ImageID + ".*\n")
+                                    if self.dlg.checkBoxDelTiff.isChecked():
+                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + ".*\n")
+
+
+                            else:
+                                with open(orto_batfil, "a") as bat_file:
+                                    defnr = defnr + 1
+
+                                    # ***  processingmanager info ***
+                                    jobnavn = ImageID[5:10]
+                                    pdone = int(float(nummernu) / float(totalantal) * 100)
+                                    bat_file.write('python C:/temp/writeProgress.py ' + jobnavn + " " + str(pdone) + " \n")
+
+                                    bbox = rs.BoundingBox(Polyg)
+                                    TLX = int(round((bbox[0] / float(RES)), 0) * float(RES))
+                                    TLY = int(round((bbox[3] / float(RES)), 0) * float(RES))
+                                    LRX = int(round((bbox[1] / float(RES)), 0) * float(RES))
+                                    LRY = int(round((bbox[2] / float(RES)), 0) * float(RES))
+                                    #BoBox = 'POLYGON (('+ str(TLX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(TLY) + '))'
+                                    BoBox =QgsGeometry.fromWkt('MULTIPOLYGON ((('+ str(TLX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(TLY) + ', ' + str(LRX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(LRY) + ', ' + str(TLX) + ' ' + str(TLY) + ')))')
+                                    #QMessageBox.information(None, "bobox",BoBox)
+
+                                    # ***  write BAT file ***
+                                    if self.dlg.radioButtonDEM_2007.isChecked():
+                                        bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
+                                            LRY - (float(RES) * 20)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                        # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
+                                    elif self.dlg.radioButtonDEM_2015.isChecked():
+                                        bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
+                                            LRY - (float(RES) * 20)) + " F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                        # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\Kms.adroot.dk\dhm2007-server\DHM-E\samlet_20150409.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
+                                    else:
+                                        pass
+
+                                    # create tif file fro processing
+                                    if (self.dlg.radioButton_fieldpath.isChecked() and ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
+                                        bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+
+                                    if self.dlg.checkBoxGoGoMinions.isChecked():
+                                        bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
+                                    else:
+                                        bat_file.write(os.path.dirname(__file__) + "\\orto.exe -def " + self.dlg.outDir.text() + "\\" + ImageID + ".def\n")
+                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\DTM_" + ImageID + ".*\n")
+                                    bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
+                                    if self.dlg.checkBoxDelTiff.isChecked():
+                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + ".*\n")
+
+
+
+
+                            # *** write DEF file ***
+                            rs.createDef(defName, imgpath, DEMpath, ortName, IO, EO, Polyg, RES)
+                            if self.dlg.checkBoxGoGoMinions.isChecked():
+                                rs.MinionManager('Orto', orto_batfil, CHKuser, BoBox)
+
+                        if self.dlg.checkBoxCreateVRT.isChecked():
+                            with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat", "a") as bat_file:
+                                # bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Building VRT ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                                # bat_file.write('ftp -i -s:u.ftp\n')
+                                bat_file.write("python C:/temp/writeProgress.py Building_VRT 0" + "\n")
+                                bat_file.write("gdalbuildvrt " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + self.dlg.outDir.text() + "\\*.tif" + "\n")
+
+                                # bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^>Adding Overlays ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                                # bat_file.write('ftp -i -s:u.ftp\n')
+                                bat_file.write("python C:/temp/writeProgress.py Adding_Overlay 0" + "\n")
+                                bat_file.write(
+                                    "gdaladdo " + self.dlg.outDir.text() + "\\" + self.dlg.inShapeA.currentText() + ".vrt " + " -r average -ro --config GDAL_CACHEMAX 900 --config COMPRESS_OVERVIEW JPEG --config JPEG_QUALITY_OVERVIEW 85 --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL --config BIGTIFF_OVERVIEW YES 2 4 10 25 50 100 200 500 1000" + "\n")
+
+                                # bat_file.write('ECHO ^<p/^>^<font color="green"^>^<b^>Procesing: ^</b^>^<font color="black"^>Procesing complete ^</b^>^<font color="black"^>^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
+                                # bat_file.write('ftp -i -s:u.ftp\n')
+                                bat_file.write("python C:/temp/writeProgress.py Processing_Done 101" + "\n")
+
+                                if self.dlg.checkBoxDelTiff.isChecked():
+                                    pass
+                                else:
+                                    bat_file.write(
+                                        "gdalbuildvrt -srcnodata \"0 0 0\" " + self.dlg.outDir.text() + ".vrt " + self.dlg.outDir.text() + "\\*.tif" + "\n")
+
+                        if self.dlg.checkBoxGoGoMinions.isChecked():
+                            QMessageBox.information(None, "Status", "Ortho photo def-files have been added to GRU's jobque. \n\n You can follow the progress on Skynet.")
+                        else:
+                            QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
+
+                pass
+
+    def runOLD(self):
         """Run method that performs all the real work"""
         # show the dialog
         self.dlg.show()
 
         QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.checkA)
         QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.update1)
+        QObject.connect(self.dlg.inShapeA, SIGNAL("currentIndexChanged(QString)"), self.update_ortonamefield)
         self.dlg.setWindowTitle(self.tr("Make Ortho"))
         # populate layer list
         self.dlg.progressBar.setValue(0)
@@ -254,6 +544,8 @@ class OrthoMaker:
                 "dbname={name} user={user} host={host} password={pswd} port={port}".format(
                     name=self.settings.value('database'),
                     user=self.settings.value('username'),
+                    schem=self.settings.value('schema'),
+                    tabl=self.settings.value('table'),
                     host=self.settings.value('hostname'),
                     pswd=self.settings.value('password'),
                     port=self.settings.value('port'),
@@ -283,24 +575,25 @@ class OrthoMaker:
 
                     if self.dlg.useSelectedA.isChecked():
                         selection = layer.selectedFeatures()
-                        QMessageBox.information(None, "status", "creating DEF for selected features")
+                        totalantal = layer.selectedFeatureCount()
+                        QMessageBox.information(None, "status", "creating DEF for "+ str(totalantal) + " selected features")
                     else:
                         selection = layer.getFeatures()
-                        QMessageBox.information(None, "status", "creating DEF for all features")
+                        totalantal = layer.featureCount()
+                        QMessageBox.information(None, "status", "creating DEF for all "+ str(totalantal) + " features")
 
-                    antaldef = str(len(selection))
                     defnr = 0
-                    totalantal = layer.selectedFeatureCount()
+
                     nummernu = 0
 
                     with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat","w") as bat_file:
                         bat_file.write("cd " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\n")
-                        bat_file.write("md jpeg")
 
                     for feat in selection:
 
                         geom = feat.geometry()
                         nummernu = nummernu + 1
+
 
                         if (typen == "polygon"):
                             Geometri = geom.asPolygon()
@@ -309,13 +602,20 @@ class OrthoMaker:
                         else:
                             Geometri = geom.asLine()
 
-                        ImageID = feat['ImageID']
+                        #ImageID = feat['ImageID']
+                        ImageID = feat[self.dlg.ortonamefield.currentText()]
 
                         # load Camera calibration
                         CameraID = feat['CameraID']
-                        # QMessageBox.information(None, "status", "kobler pÃ¥ DB med "+"SELECT * FROM camera_calibrations WHERE camera_id = \'" + str(CameraID) + "\' order by calibration_date DESC limit 1")
-                        dbkald = "SELECT * FROM camera_calibrations WHERE camera_id = \'" + str(
-                            CameraID) + "\' order by calibration_date DESC limit 1"
+                        try:
+                            ConeID = feat['coneid']
+                            #QMessageBox.information(None,'ConeID',ConeID)
+                        except (RuntimeError, TypeError, NameError, KeyError):
+                            ConeID = '0'
+                            #QMessageBox.information(None, 'ConeID',ConeID)
+                        #QMessageBox.information(None, 'status', 'kobler paa DB med '+'SELECT * FROM camera_calibrations WHERE camera_id = \'' + str(CameraID) + '\' and cone_id = \'' + ConeID +'\' order by calibration_date DESC limit 1')
+                        #dbkald = "SELECT * FROM remote_sensing.camera_calibrations WHERE camera_id = \'" + str(CameraID) + "\' and cone_id = \'" + ConeID +"\' order by calibration_date DESC limit 1"
+                        dbkald = "SELECT * FROM remote_sensing.camera_calibrations WHERE camera_id = \'" + str(CameraID) + "\' and cone_id = \'" + ConeID + "\' order by calibration_date DESC limit 1"
                         cur.execute(dbkald)
                         ccdb_svar = cur.fetchone()
                         # QMessageBox.information(None, "db info", str(ccdb_svar))
@@ -328,14 +628,16 @@ class OrthoMaker:
                             SensorY = ccdb_svar[6]  # 17310
                             PriXin = float(ccdb_svar[3])  # (-18)
                             PriYin = float(ccdb_svar[4])  # (0)
+                            coneid = ccdb_svar[15]
                         except (RuntimeError, TypeError, NameError, ValueError):
-                            QMessageBox.information(None, "General Error",
-                                                    "Camera calibration for " + str(CameraID) + " not found in DB!")
+                            QMessageBox.information(None, "General Error","Camera calibration for " + str(CameraID) + " not found in DB!")
                             noError = False
                             return
 
                         # Read fields
+
                         OName = "O" + ImageID + ".tif"
+                        #QMessageBox.information(None, "navn til orto",OName)
                         RES = self.dlg.lineEditPixelSize.text()
                         if CamRot == 0:
                             IL1 = " 0.000 " + str(pix)
@@ -401,6 +703,7 @@ class OrthoMaker:
                         else:
                             usersetangle = float(self.dlg.lineEditImageAngle.text())
                             clipKAM = float(KAP) - float(CamRot) + float(imgRot)
+
                             if (pix == 0.006):
                                 if (clipKAM > -630 - usersetangle and clipKAM < -630 + usersetangle) or (
                                         clipKAM > -450 - usersetangle and clipKAM < -450 + usersetangle) or (
@@ -408,7 +711,6 @@ class OrthoMaker:
                                         clipKAM > -90 - usersetangle and clipKAM < -90 + usersetangle) or (
                                         clipKAM > 90 - usersetangle and clipKAM < 90 + usersetangle) or (
                                         clipKAM > 270 - usersetangle and clipKAM < 270 + usersetangle):
-                                    # if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
                                     OSizeX = 2200
                                     OSizeY = 800
                                 elif (clipKAM > -720 - usersetangle and clipKAM < -720 + usersetangle) or (
@@ -417,7 +719,6 @@ class OrthoMaker:
                                         clipKAM > -180 - usersetangle and clipKAM < -180 + usersetangle) or (
                                         clipKAM > 0 - usersetangle and clipKAM < 0 + usersetangle) or (
                                         clipKAM > 180 - usersetangle and clipKAM < 180 + usersetangle):
-                                    # elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
                                     OSizeX = 800
                                     OSizeY = 2200
                                 else:
@@ -430,21 +731,25 @@ class OrthoMaker:
                                         clipKAM > -90 - usersetangle and clipKAM < -90 + usersetangle) or (
                                         clipKAM > 90 - usersetangle and clipKAM < 90 + usersetangle) or (
                                         clipKAM > 270 - usersetangle and clipKAM < 270 + usersetangle):
-                                    # if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
-                                    OSizeX = 2500
-                                    OSizeY = 900
+                                    OSizeX = int(float(Z_0) * 0.90)  # 3200
+                                    OSizeY = int(float(Z_0) * 0.30)  # 1000
+                                    #OSizeX = 2500
+                                    #OSizeY = 900
                                 elif (clipKAM > -720 - usersetangle and clipKAM < -720 + usersetangle) or (
                                         clipKAM > -540 - usersetangle and clipKAM < -540 + usersetangle) or (
                                         clipKAM > -360 - usersetangle and clipKAM < -360 + usersetangle) or (
                                         clipKAM > -180 - usersetangle and clipKAM < -180 + usersetangle) or (
                                         clipKAM > 0 - usersetangle and clipKAM < 0 + usersetangle) or (
                                         clipKAM > 180 - usersetangle and clipKAM < 180 + usersetangle):
-                                    # elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
-                                    OSizeX = 900
-                                    OSizeY = 2500
+                                    OSizeX = int(float(Z_0) * 0.30)  # 3200
+                                    OSizeY = int(float(Z_0) * 0.90)  # 1000
+                                    #OSizeX = 900
+                                    #OSizeY = 2500
                                 else:
-                                    OSizeX = 2500
-                                    OSizeY = 2500
+                                    OSizeX = int(float(Z_0) * 0.90)  # 3200
+                                    OSizeY = int(float(Z_0) * 0.90)  # 1000
+                                    #OSizeX = 2500
+                                    #OSizeY = 2500
                             elif (pix == 0.0046):
                                 if (clipKAM > -630 - usersetangle and clipKAM < -630 + usersetangle) or (
                                         clipKAM > -450 - usersetangle and clipKAM < -450 + usersetangle) or (
@@ -452,21 +757,40 @@ class OrthoMaker:
                                         clipKAM > -90 - usersetangle and clipKAM < -90 + usersetangle) or (
                                         clipKAM > 90 - usersetangle and clipKAM < 90 + usersetangle) or (
                                         clipKAM > 270 - usersetangle and clipKAM < 270 + usersetangle):
-                                    # if (clipKAM > -635 and clipKAM < -625) or (clipKAM > -455 and clipKAM < -445) or (clipKAM > -275 and clipKAM < -265) or (clipKAM > -95 and clipKAM < -85) or (clipKAM > 85 and clipKAM < 95) or (clipKAM > 265 and clipKAM < 275):
-                                    OSizeX = 2800
-                                    OSizeY = 1000
+                                    OSizeX = int(float(Z_0)*0.95) #3200
+                                    OSizeY = int(float(Z_0)*0.33) #1000
                                 elif (clipKAM > -720 - usersetangle and clipKAM < -720 + usersetangle) or (
                                         clipKAM > -540 - usersetangle and clipKAM < -540 + usersetangle) or (
                                         clipKAM > -360 - usersetangle and clipKAM < -360 + usersetangle) or (
                                         clipKAM > -180 - usersetangle and clipKAM < -180 + usersetangle) or (
                                         clipKAM > 0 - usersetangle and clipKAM < 0 + usersetangle) or (
                                         clipKAM > 180 - usersetangle and clipKAM < 180 + usersetangle):
-                                    # elif (clipKAM > -725 and clipKAM < -715) or (clipKAM > -545 and clipKAM < -535) or (clipKAM > -365 and clipKAM < -355) or (clipKAM > -185 and clipKAM < -175) or (clipKAM > -5 and clipKAM < 5) or (clipKAM > 175 and clipKAM < 185):
-                                    OSizeX = 1000
-                                    OSizeY = 2800
+                                    OSizeX = int(float(Z_0) * 0.33)  # 1000
+                                    OSizeY = int(float(Z_0) * 0.95)  # 2800
                                 else:
-                                    OSizeX = 2800
-                                    OSizeY = 2800
+                                    OSizeX = int(float(Z_0)*0.95) #3200
+                                    OSizeY = int(float(Z_0)*0.95) #3200
+                            elif (pix == 0.0039):
+                                if (clipKAM > -630 - usersetangle and clipKAM < -630 + usersetangle) or (
+                                        clipKAM > -450 - usersetangle and clipKAM < -450 + usersetangle) or (
+                                        clipKAM > -270 - usersetangle and clipKAM < -270 + usersetangle) or (
+                                        clipKAM > -90 - usersetangle and clipKAM < -90 + usersetangle) or (
+                                        clipKAM > 90 - usersetangle and clipKAM < 90 + usersetangle) or (
+                                        clipKAM > 270 - usersetangle and clipKAM < 270 + usersetangle):
+                                    OSizeX = int(float(Z_0)*0.9) #3200
+                                    OSizeY = int(float(Z_0)*0.26) #1000
+                                elif (clipKAM > -720 - usersetangle and clipKAM < -720 + usersetangle) or (
+                                        clipKAM > -540 - usersetangle and clipKAM < -540 + usersetangle) or (
+                                        clipKAM > -360 - usersetangle and clipKAM < -360 + usersetangle) or (
+                                        clipKAM > -180 - usersetangle and clipKAM < -180 + usersetangle) or (
+                                        clipKAM > 0 - usersetangle and clipKAM < 0 + usersetangle) or (
+                                        clipKAM > 180 - usersetangle and clipKAM < 180 + usersetangle):
+                                    OSizeX = int(float(Z_0)*0.26) #1000
+                                    OSizeY = int(float(Z_0)*0.9) #3200)
+                                else:
+                                    OSizeX = int(float(Z_0)*0.9) #3200
+                                    OSizeY = int(float(Z_0)*0.9) #3200
+
                             TLX = float(X_0) - (OSizeX / 2)
                             TLY = float(Y_0) + (OSizeY / 2)
                             LRX = float(X_0) + (OSizeX / 2)
@@ -475,20 +799,18 @@ class OrthoMaker:
                             SZX = OSizeX / float(RES)
                             SZY = OSizeY / float(RES)
 
+
+
+
                         with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat", "a") as bat_file:
                             defnr = defnr + 1
-                            # bat_file.write("@echo *** Calculating DEF file " + str(defnr) + " of " + antaldef + " ***\n")
 
                             # ***  processingmanager info ***
                             jobnavn = ImageID[5:10]
                             pdone = int(float(nummernu)/float(totalantal)*100)
-                            #print pdone
                             bat_file.write('python C:/temp/writeProgress.py ' + jobnavn + " " + str(pdone) + " \n")
-                            #bat_file.write('ECHO ^<p/^>^<font color="orange"^>^<b^>Procesing: ^</b^>^<font color="black"^> ' + str(nummernu) + ' of ' + str(totalantal) + ' ^</p^>>"F:\GEO\DATA\RemoteSensing\Drift\Processing\Status_C1200010.html"\n')
-                            #bat_file.write('ftp -i -s:u.ftp\n')
 
-                            # ***  Creating BAT file ***
-
+                            # ***  write BAT file ***
                             if self.dlg.radioButtonDEM_2007.isChecked():
                                 bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                 # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
@@ -498,31 +820,39 @@ class OrthoMaker:
                             else:
                                 pass
 
+                            # create tif file fro processing
+                            # QMessageBox.information(None, "db info", (os.path.splitext(IMG)[1]).lower())
+
+                            if (self.dlg.radioButton_fieldpath.isChecked() and ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
+                                bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+
                             bat_file.write(os.path.dirname(__file__) + "\\orto.exe -def " + self.dlg.outDir.text() + "\\" + ImageID + ".def\n")
                             bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/','\\') + "\\DTM_" + ImageID + ".*\n")
                             bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
                             if self.dlg.checkBoxDelTiff.isChecked():
                                 bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/','\\') + "\\O" + ImageID + ".*\n")
 
-                        # write DEF file
+                        # *** write DEF file ***
                         with open(self.dlg.outDir.text() + "\\" + ImageID + ".def", "w") as text_file:
                             text_file.write("PRJ= nill.apr" + " \n")
                             text_file.write("ORI= nill.txt" + " \n")
                             text_file.write("RUN= 0" + " \n")
                             text_file.write("DEL= NO" + " \n")
                             if self.dlg.radioButton_fieldpath.isChecked():
-                                text_file.write("IMG= " + str(
-                                    feat[self.dlg.inField1.currentText()]) + "/" + ImageID + ".tif" + " \n")
+                                #text_file.write("IMG= " + str(feat[self.dlg.inField1.currentText()]) + "/" + ImageID + ".tif" + " \n")
+                                #text_file.write("IMG= " + str.replace(str.replace(str(feat[self.dlg.inField1.currentText()]),"_JPEG","_TIFF"),".jpg",".tif") + " \n")
+                                if ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg'):
+                                    text_file.write("IMG= "+ self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+                                else:
+                                    text_file.write("IMG= " + str(feat[self.dlg.inField1.currentText()]) + " \n")
                             else:
-                                text_file.write(
-                                    "IMG= " + os.path.dirname(self.dlg.inDir.text()) + "/" + ImageID + ".tif" + " \n")
+                                text_file.write("IMG= " + os.path.dirname(self.dlg.inDir.text()) + "/" + ImageID + ".tif" + " \n")
                             if self.dlg.radioButtonDEM_spec.isChecked():
                                 text_file.write("DGL= " + self.dlg.lineEditDEM.text() + " \n")
                                 text_file.write("DGP= DTM_" + " \n")
                                 text_file.write("DGS= 1" + " \n")
                             else:
-                                text_file.write(
-                                    "DTM= " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc" + " \n")
+                                text_file.write("DTM= " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc" + " \n")
                             text_file.write("ORT= " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " \n")
                             text_file.write("TLX= " + str(TLX) + " \n")
                             text_file.write("TLY= " + str(TLY) + " \n")
@@ -554,8 +884,7 @@ class OrthoMaker:
                                     punktnummer = 0
                                     for punkt in punktliste:
                                         punktnummer = punktnummer + 1
-                                        text_file.write("BP" + str(punktnummer) + "= " + str(punkt.x()) + " " + str(
-                                            punkt.y()) + " \n")
+                                        text_file.write("BP" + str(punktnummer) + "=" + str(punkt.x()) + " " + str(punkt.y()) + " \n")
 
                             text_file.close()
 
@@ -583,6 +912,7 @@ class OrthoMaker:
                     QMessageBox.information(None, "Settings",
                                             "DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
 
+            conn.close()
             pass
 
     def build_filelist(self):
@@ -647,7 +977,7 @@ class OrthoMaker:
 
                 with open(outSti + "/" + zipPoly + ".filelist", "w") as text_file:
                     for featPnt in featsPnt:
-                        if featPnt.geometry().within(geomPoly.buffer(1200, 3)):
+                        if featPnt.geometry().within(geomPoly.buffer(1400, 3)):
                             text_file.write('O' + featPnt["imageid"] + '.tif\n')
                 text_file.close()
 

@@ -15,6 +15,8 @@ class OrthoMakerSettings(SettingManager):
     def __init__(self):
         SettingManager.__init__(self, 'OrthoMaker')
         self.add_setting(String('database', Scope.Global, ''))
+        self.add_setting(String('schema', Scope.Global, ''))
+        self.add_setting(String('table', Scope.Global, ''))
         self.add_setting(String('hostname', Scope.Global, ''))
         self.add_setting(String('username', Scope.Global, ''))
         self.add_setting(String('password', Scope.Global, ''))

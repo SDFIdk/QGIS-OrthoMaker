@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>396</width>
-    <height>691</height>
+    <width>393</width>
+    <height>772</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>650</y>
+     <y>730</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -33,7 +33,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>610</y>
+     <y>700</y>
      <width>361</width>
      <height>23</height>
     </rect>
@@ -46,7 +46,7 @@
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>530</y>
+     <y>580</y>
      <width>141</width>
      <height>17</height>
     </rect>
@@ -59,7 +59,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>130</y>
+     <y>120</y>
      <width>371</width>
      <height>151</height>
     </rect>
@@ -202,7 +202,7 @@
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>510</y>
+     <y>560</y>
      <width>141</width>
      <height>17</height>
     </rect>
@@ -215,9 +215,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>290</y>
+     <y>350</y>
      <width>371</width>
-     <height>81</height>
+     <height>71</height>
     </rect>
    </property>
    <property name="title">
@@ -251,7 +251,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>380</y>
+     <y>430</y>
      <width>371</width>
      <height>111</height>
     </rect>
@@ -326,7 +326,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>510</y>
+     <y>560</y>
      <width>46</width>
      <height>20</height>
     </rect>
@@ -339,7 +339,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>510</y>
+     <y>560</y>
      <width>41</width>
      <height>20</height>
     </rect>
@@ -349,7 +349,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>580</y>
+     <y>630</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -362,7 +362,7 @@
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>510</y>
+     <y>560</y>
      <width>46</width>
      <height>20</height>
     </rect>
@@ -375,7 +375,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>580</y>
+     <y>630</y>
      <width>231</width>
      <height>20</height>
     </rect>
@@ -385,7 +385,7 @@
    <property name="geometry">
     <rect>
      <x>330</x>
-     <y>580</y>
+     <y>630</y>
      <width>31</width>
      <height>21</height>
     </rect>
@@ -398,7 +398,7 @@
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>540</y>
+     <y>590</y>
      <width>46</width>
      <height>20</height>
     </rect>
@@ -411,7 +411,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>540</y>
+     <y>590</y>
      <width>51</width>
      <height>20</height>
     </rect>
@@ -424,10 +424,72 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>540</y>
+     <y>590</y>
      <width>41</width>
      <height>20</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_5">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>280</y>
+     <width>371</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Ortho naming</string>
+   </property>
+   <widget class="QComboBox" name="ortonamefield">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>331</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QCheckBox" name="checkBoxCreateVRT">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>600</y>
+     <width>141</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Create VRT</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBoxGoGoMinions">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>670</y>
+     <width>141</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Go Go Minions</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBoxMinionsOut">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>670</y>
+     <width>141</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>output to F</string>
    </property>
   </widget>
  </widget>
