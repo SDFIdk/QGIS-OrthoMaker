@@ -1,17 +1,17 @@
 Plugin Builder Results
 
 Your plugin OrthoMaker was created in:
-    C:\Users\anfla\.qgis2\python\plugins\OrthoMaker
+    C:/Users/B004020/Documents/Filkassen/PythonKodeQGIS/QGIS3\ortho_maker
 
 Your QGIS plugin directory is located at:
-    C:/Users/anfla/.qgis2/python/plugins
+    C:/Users/B004020/AppData/Roaming/QGIS/QGIS3/profiles/Flatman/python/plugins
 
 What's Next:
 
   * Copy the entire directory containing your new plugin to the QGIS plugin
     directory
 
-  * Compile the resources file using pyrcc4
+  * Compile the resources file using pyrcc5
 
   * Run the tests (``make test``)
 
@@ -21,7 +21,7 @@ What's Next:
 
   * Create your own custom icon, replacing the default icon.png
 
-  * Modify your user interface by opening OrthoMaker.ui in Qt Designer
+  * Modify your user interface by opening OrthoMaker_dialog_base.ui in Qt Designer
 
   * You can use the Makefile to compile your Ui and resource files when
     you make changes. This requires GNU make (gmake)
@@ -29,5 +29,4 @@ What's Next:
 For more information, see the PyQGIS Developer Cookbook at:
 http://www.qgis.org/pyqgis-cookbook/index.html
 
-(C) 2011-2014 GeoApt LLC - geoapt.com
-Git revision : $Format:%H$
+(C) 2011-2018 GeoApt LLC - geoapt.com
