@@ -354,38 +354,25 @@ class OrthoMaker:
                                 #/Fusk
                             print (cameraID +' ' + coneID + ' ' + imageDate)
                             
-                            if self.dlg.checkBox_io_camera.isChecked():
-                                # Use camera calibration file
-                                try:
-                                    IO = rs.getIO(cameraID, coneID, imageDate)
-                                except:
-                                    QMessageBox.information(None, "ERROR", f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                                    raise Exception(f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                            else:
-                                try:
-                                    #CamRot = 270
-                                    if feat["mount_rotation"] is None:
-                                        CamRot = 270  # Default is typically 270 degrees
-                                    else:
-                                        CamRot = feat["mount_rotation"]
-                                    #CamRot = 270
-                                    c = feat["focal_length"] * (-1)  # 100.5
-                                    pix = feat["pixel_size"]/1000 # 0.006
-                                    dimXi = (feat["image_format_x"]*pix/2)*-1 # -34.008
-                                    dimYi = (feat["image_format_y"]*pix/2)*-1 # -52.026
-                                    xx0i = feat["x_ppa"] # (-18)
-                                    yy0i = feat["y_ppa"] # (0)
+                            try:
+                                CamRot = 270
+                                c = feat["focal_length"] * (-1)  # 100.5
+                                pix = feat["pixel_size"]/1000 # 0.006
+                                dimXi = (feat["image_format_x"]*pix/2)*-1 # -34.008
+                                dimYi = (feat["image_format_y"]*pix/2)*-1 # -52.026
+                                xx0i = feat["x_ppa"] # (-18)
+                                yy0i = feat["y_ppa"] # (0)
 
-                                    dimX = dimXi
-                                    dimY = dimYi
-                                    xx0 = xx0i
-                                    yy0 = yy0i
+                                dimX = dimXi
+                                dimY = dimYi
+                                xx0 = xx0i
+                                yy0 = yy0i
 
-                                    IO = [xx0,yy0,c,pix,dimX,dimY,CamRot]
-                                    inner_ori_table = True
-                                except:
-                                    QMessageBox.information(None, "ERROR", "Filen mangler en eller flere IO parametre")
-                                    raise Exception("Filen mangler en eller flere IO parametre")
+                                IO = [xx0,yy0,c,pix,dimX,dimY,CamRot]
+                                inner_ori_table = True
+                            except:
+                                IO = rs.getIO(cameraID, coneID,imageDate)
+                                inner_ori_table = False
                             
                             pix = IO[3]
                             dimX = IO[4]*-2/pix
@@ -711,7 +698,7 @@ class OrthoMaker:
                             QMessageBox.information(None, "Status", "Ortho photo def-files have been added to GRU's jobque. \n\n You can follow the progress on Skynet.")
                         else:
                             #QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
-                            QMessageBox.information(None, "Status",f"DEF and Batfile created. \n\nPlease run {self.dlg.lineEdit_workdir.text()}\\{self.dlg.inShapeA.currentText()}.bat from a OSGEO4W shell")
+                            QMessageBox.information(None, "Status",f"DEF and Batfile created. \n\nPlease run {self.dlg.lineEdit_workdir.text()}\\{self.dlg.inShapeA.currentText()}.bat from a OSGEO4W shell\n\nFYI: inner orientations found in table: {inner_ori_table}")
                             #QMessageBox.information(None, "status", f"Inner orientations found in table: {inner_ori_table}\n\nFound other directions than T: {dir_not_T}")
 
                 pass

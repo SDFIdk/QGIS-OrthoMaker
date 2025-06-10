@@ -9,12 +9,12 @@
 """
 
 __author__ = 'anfla@sdfe.dk'
-__date__ = '2016-03-15'
-__copyright__ = 'Copyright 2016, Andrew Flatman / sdfe.dk'
+__date__ = '2022-05-06'
+__copyright__ = 'Copyright 2022, Andrew Flatman / Danish Mapping Agency'
 
 import unittest
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 
 

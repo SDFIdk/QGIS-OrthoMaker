@@ -249,7 +249,7 @@ class OrthoMaker:
         #self.dlg.inShapeA.clear()
         #self.dlg.inShapeA.addItems(lyr_list)
 
-        #self.dlg.progressBar.hide()
+        self.dlg.progressBar.hide()
 
         # Run the dialog event loop
         result = self.dlg.exec_()
@@ -317,16 +317,10 @@ class OrthoMaker:
                                 #text_file.write("IMG= " + str.replace(str.replace(str(feat[self.dlg.inField1.currentText()]),"_JPEG","_TIFF"),".jpg",".tif") + " \n")
                                 print (ImageID)
                                 print(self.dlg.lineEdit_workdir.text())
-                                
-                                ##fix jpegs
-                                #if ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg'):
-                                #    imgpath = str(self.dlg.lineEdit_workdir.text()) + "\\DTM_" + ImageID + ".tif"
-                                #else:
-                                #    imgpath = str(feat[self.dlg.inField1.currentText()])
-
-                                #always fix jpegs, also in tiffjpegs
-                                imgpath = str(self.dlg.lineEdit_workdir.text()) + "\\DTM_" + ImageID + ".tif"
-
+                                if ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg'):
+                                    imgpath = str(self.dlg.lineEdit_workdir.text()) + "\\DTM_" + ImageID + ".tif"
+                                else:
+                                    imgpath = str(feat[self.dlg.inField1.currentText()])
                             else:
                                 imgpath = os.path.dirname(self.dlg.inDir.text()) + "/" + ImageID + ".tif"
 
@@ -353,40 +347,7 @@ class OrthoMaker:
                                 #coneID = '0'
                                 #/Fusk
                             print (cameraID +' ' + coneID + ' ' + imageDate)
-                            
-                            if self.dlg.checkBox_io_camera.isChecked():
-                                # Use camera calibration file
-                                try:
-                                    IO = rs.getIO(cameraID, coneID, imageDate)
-                                except:
-                                    QMessageBox.information(None, "ERROR", f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                                    raise Exception(f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                            else:
-                                try:
-                                    #CamRot = 270
-                                    if feat["mount_rotation"] is None:
-                                        CamRot = 270  # Default is typically 270 degrees
-                                    else:
-                                        CamRot = feat["mount_rotation"]
-                                    #CamRot = 270
-                                    c = feat["focal_length"] * (-1)  # 100.5
-                                    pix = feat["pixel_size"]/1000 # 0.006
-                                    dimXi = (feat["image_format_x"]*pix/2)*-1 # -34.008
-                                    dimYi = (feat["image_format_y"]*pix/2)*-1 # -52.026
-                                    xx0i = feat["x_ppa"] # (-18)
-                                    yy0i = feat["y_ppa"] # (0)
-
-                                    dimX = dimXi
-                                    dimY = dimYi
-                                    xx0 = xx0i
-                                    yy0 = yy0i
-
-                                    IO = [xx0,yy0,c,pix,dimX,dimY,CamRot]
-                                    inner_ori_table = True
-                                except:
-                                    QMessageBox.information(None, "ERROR", "Filen mangler en eller flere IO parametre")
-                                    raise Exception("Filen mangler en eller flere IO parametre")
-                            
+                            IO = rs.getIO(cameraID, coneID,imageDate)
                             pix = IO[3]
                             dimX = IO[4]*-2/pix
                             dimY = IO[5]*-2/pix
@@ -401,7 +362,7 @@ class OrthoMaker:
 
 
                             EO = [X0, Y0, Z0, Ome, Phi, Kap]
-                            #QMessageBox.information(None, "status", f"EO is {EO}\nIO is {IO}")
+
                             # QO footprint
                             if self.dlg.checkBox_bbox.isChecked():
                                 #QMessageBox.information(None, "Settings","benytter footprint shp")
@@ -498,93 +459,41 @@ class OrthoMaker:
                                         bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                     elif self.dlg.radioButtonDEM_spec.isChecked():
                                         if self.dlg.checkBoxGoGoMinions.isChecked():
-                                            #bat_file.write('ogr2ogr -f ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom, \'SRID=25832;POLYGON((' + minX + ' ' + minY + ',' + minX + ' ' + maxY + ',' + maxX + ' ' + maxY + ',' + maxX + ' ' + minY + ',' + minX + ' ' + minY + '))\')\"\n')
-                                            bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=10.34.133.93 port=5432 user=postgres  password=postgres  dbname= dhmqc\" -sql \"select ST_Difference (ST_Union(st_buffer(wkb_geometry, 40)), ST_Union(st_buffer(wkb_geometry,-1))) from geodk.bygning WHERE ST_Intersects(wkb_geometry, \'SRID=25832;POLYGON((' + minX + ' ' + minY + ',' + minX + ' ' + maxY + ',' + maxX + ' ' + maxY + ',' + maxX + ' ' + minY + ',' + minX + ' ' + minY + '))\')\"\n')
-                                            bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20230816.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".asc\n")
+                                            bat_file.write('ogr2ogr -f ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom, \'SRID=25832;POLYGON((' + minX + ' ' + minY + ',' + minX + ' ' + maxY + ',' + maxX + ' ' + maxY + ',' + maxX + ' ' + minY + ',' + minX + ' ' + minY + '))\')\"\n')
+                                            bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20190327.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".asc\n")
                                             bat_file.write('gdal_rasterize -burn -9999 -l maske ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".asc\n")
-                                            bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".asc " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.asc\n")
-                                            #bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
-                                            bat_file.write('call  gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.asc " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")                                           
+                                            bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".asc " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                            bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                         else:
                                             #non rooftop #bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " " + self.dlg.lineEditDEM.text() + " " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
-                                            #bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom, \'SRID=25832;POLYGON((' + str(TLX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(LRY) + '))\')\"\n')
-                                            bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=10.34.133.93 port=5432 user=postgres  password=postgres  dbname= dhmqc\" -sql \"select ST_Difference (ST_Union(st_buffer(wkb_geometry, 40)), ST_Union(st_buffer(wkb_geometry,-1))) from geodk.bygning WHERE ST_Intersects(wkb_geometry, \'SRID=25832;POLYGON((' + minX + ' ' + minY + ',' + minX + ' ' + maxY + ',' + maxX + ' ' + maxY + ',' + maxX + ' ' + minY + ',' + minX + ' ' + minY + '))\')\"\n')
-                                            bat_file.write("gdal_translate -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20230816.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
+                                            bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom, \'SRID=25832;POLYGON((' + str(TLX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(LRY) + '))\')\"\n')
+                                            bat_file.write("gdal_translate -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20190327.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
                                             bat_file.write('gdal_rasterize -burn -9999 -l ' + ImageID + '_maske ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
-                                            bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.tif\n")
-                                            #bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
-                                            bat_file.write('call  gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+                                            bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+                                            bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
                                             bat_file.write('gdal_translate -of AAIGrid ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                     else:
-                                        #bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom,  \'SRID=25832;POLYGON((' + str(TLX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(LRY) + '))\')\"\n')
-                                        bat_file.write('ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=10.34.133.93 port=5432 user=postgres  password=postgres  dbname= dhmqc\" -sql \"select ST_Difference (ST_Union(st_buffer(wkb_geometry, 40)), ST_Union(st_buffer(wkb_geometry,-1))) from geodk.bygning WHERE ST_Intersects(wkb_geometry, \'SRID=25832;POLYGON((' + str(TLX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(LRY) + '))\')\"\n')  
+                                        bat_file.write(
+                                            'ogr2ogr -f \"ESRI Shapefile\" ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp pg:\"host=C1507145 port=5432 user= python_script_sdfe  password= python_script_sdfe  dbname= grundkort\" -sql \"select ST_Difference (ST_Union(st_buffer(geom, 40)), ST_Union(st_buffer(geom,-1))) from geodk.bygning WHERE ST_Intersects(geom, \'SRID=25832;POLYGON((' + str(
+                                                TLX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(TLY) + ',' + str(LRX) + ' ' + str(LRY) + ',' + str(TLX) + ' ' + str(LRY) + '))\')\"\n')
                                         bat_file.write("gdal_translate -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
-                                            LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20230816.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
+                                            LRY - (float(RES) * 20)) + " F:/GDB/DHM/AnvendelseGIS/DSM_20190327.vrt " + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
                                         bat_file.write(
                                             'gdal_rasterize -burn -9999 -l ' + ImageID + '_maske ' + self.dlg.lineEdit_workdir.text() + '\\' + ImageID + '_maske.shp ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif\n")
-                                        bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.tif\n")
-                                        #bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
-                                        bat_file.write('call  gdal_fillnodata.bat -si 1 ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + "m.tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+                                        bat_file.write('gdal_translate -a_nodata -9999 ' + self.dlg.lineEdit_workdir.text() + "\\raw_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
+                                        bat_file.write('call  C:/OSGeo4W64/bin/gdal_fillnodata.bat ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
                                         bat_file.write('gdal_translate -of AAIGrid ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
 
-                                    
-                                    #Fix JPEGs for input
-                                    #if (((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
-                                    #    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
-                                    
-                                    #always fix jpeg, also in tiffjpeg
-
-                                    nadir = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-                                    oblique = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-
-                                    try:
-                                        direction = feat["direction"]
-                                        QMessageBox.information(None, "status", f"Direction was: {direction}")
-                                        if direction == 'T':
-                                            bat_file.write(nadir) ## If the table contain direction attribute and if it is nadir, then write 4 bands
-                                        else:
-                                             bat_file.write(oblique) ## If the table contain direction attribute and if it is different than nadir, then only write 3 bands
-                                    except:
-                                        bat_file.write(nadir) ## If the table does not contain direction attribute, we assume the image has 4 bands..
-
                                     bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
-                                    if self.dlg.radioButton_typ_rgb.isChecked():
-                                        TYP = "RGB"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_rgb.tif") + "\n")
-                                    elif self.dlg.radioButton_typ_cir.isChecked():
-                                        TYP = "CIR"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName.replace(".tif", "_cir.tif") + " " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_cir.tif") + "\n")
-                                    elif self.dlg.radioButton_typ_both.isChecked():
-                                        TYP = "BOTH"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName.replace(".tif", "_cir.tif") + " " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_cir.tif") + "\n")
-                                    else:
-                                        TYP = "COMBI"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
-                                    
-                                    if self.dlg.checkBoxML.isChecked():
-                                        print('kun ortofoto genereres')
-                                        #Indsæt hvis der ønsker udklip fra orto# bat_file.write("gdalwarp -t_srs EPSG:25832 -te " + str(TLX) +" " + str(LRY) +" " + str(LRX) +" " + str(TLY)  +" -tr " + str(RES) + " " + str(RES) + " -of GTIFF \"https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS?username=PHPJUVTASW&password=Geo123!!&layers=geodanmark_2021_12_5cm_cir&SERVICE=WMS\" " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_OrtoCIR.tif") + "\n")
-                                        #Indsæt hvis der ønsker udklip fra orto# bat_file.write("gdalwarp -t_srs EPSG:25832 -te " + str(TLX) +" " + str(LRY) +" " + str(LRX) +" " + str(TLY)  +" -tr " + str(RES) + " " + str(RES) + " -of GTIFF \"https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS?username=PHPJUVTASW&password=Geo123!!&layers=geodanmark_2021_12_5cm&SERVICE=WMS\" " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_OrtoRGB.tif") + "\n")
-
-                                        bat_file.write("gdalwarp -t_srs EPSG:25832 -te " + str(TLX) +" " + str(LRY) +" " + str(LRX) +" " + str(TLY)  +" -tr " + str(RES) + " " + str(RES) + " -of GTIFF F:\GDB\DHM\AnvendelseGIS\DSM_20220602.vrt " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_DSM.tif") + "\n")
-                                        bat_file.write("gdalwarp -t_srs EPSG:25832 -te " + str(TLX) +" " + str(LRY) +" " + str(LRX) +" " + str(TLY)  +" -tr " + str(RES) + " " + str(RES) + " -of GTIFF F:\GDB\DHM\AnvendelseGIS\DTM_orto.vrt " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_DTM.tif") + "\n")
-
-
-
+                                    bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
                                     bat_file.write("REM *** Move Output *** \n")
                                     #if self.dlg.checkBoxMinionsOut.isChecked():
                                         #bat_file.write("move " + self.dlg.outDir.text() + "\\" + OName + " F:\\JOB\\DATA\\RemoteSensing\\Drift\\GRU\\orto_output \n")
-                                    #bat_file.write("move " + self.dlg.outDir.text() + "\\" + OName + " \\\\10.48.199.207\\Data_8\\Rooftop_full \n")
-                                    bat_file.write("move " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "*.*") + " " +self.dlg.outDir_minion.text() + " \n")
-                                    #if self.dlg.radioButton_typ_both.isChecked():
-                                    #    bat_file.write("move " + self.dlg.outDir.text() + "\\*.*" + " " +self.dlg.outDir_minion.text() + " \n")
+                                    bat_file.write("move " + self.dlg.outDir.text() + "\\" + OName + " \\\\10.48.199.207\\Data_8\\Rooftop_full \n")
                                     bat_file.write("REM *** CleanUP *** \n")
-                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\DTM_" + ImageID + "*\n")
-                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\" + ImageID + "*\n")
-                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\raw_" + ImageID + "*\n")
+                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\*" + ImageID + ".*\n")
                                     if self.dlg.checkBoxDelTiff.isChecked():
-                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + "*\n")
+                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + ".*\n")
 
 
                             else:
@@ -610,7 +519,7 @@ class OrthoMaker:
                                     # ***  write BAT file ***
                                     if self.dlg.radioButtonDEM_2007.isChecked():
                                         bat_file.write("gdal_translate -of AAIGrid -projwin " + str(TLX - (float(RES) * 20)) + " " + str(TLY + (float(RES) * 20)) + " " + str(LRX + (float(RES) * 20)) + " " + str(
-                                            LRY - (float(RES) * 20)) + " F:\\GDB\\DHM\\AnvendelseGIS\\DTM_orto.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
+                                            LRY - (float(RES) * 20)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".asc\n")
                                         # bat_file.write("gdal_translate -of AAIGrid -projwin " + str(float(X_0)-(OSizeX/1.8)) + " " + str(float(Y_0)+(OSizeY/1.8)) + " " + str(float(X_0) + (OSizeX/1.8)) + " " + str(float(Y_0) - (OSizeY/1.8)) + " \\\\c1200038\Data\dtm2007\dtm2007.vrt " + self.lineEdit_workdir.text()+"\\DTM_"+ImageID+".asc\n")
                                     elif self.dlg.radioButtonDEM_2015.isChecked():
                                         if self.dlg.radioButtonDEM_2015.isChecked():
@@ -633,56 +542,26 @@ class OrthoMaker:
                                     else:
                                         pass
 
-                                    # create tif file for processing
-                                    # if (self.dlg.radioButton_fieldpath.isChecked() and ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
-                                    #if (((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
-                                    #    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
-                                    #always fix jpeg, also in tiffjpeg
-
-                                    nadir = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-                                    oblique = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-
-                                    try:
-                                        direction = feat["direction"]
-                                        #QMessageBox.information(None, "status", f"Direction was: {direction}")
-                                        if direction == 'T':
-                                            bat_file.write(nadir) ## If the table contain direction attribute and if it is nadir, then write 4 bands
-                                        else:
-                                             bat_file.write(oblique) ## If the table contain direction attribute and if it is different than nadir, then only write 3 bands
-                                    except:
-                                        bat_file.write(nadir) ## If the table does not contain direction attribute, we assume the image has 4 bands..
-                                    #bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n")
+                                    # create tif file fro processing
+                                    if (self.dlg.radioButton_fieldpath.isChecked() and ((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
+                                        bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
 
                                     if self.dlg.checkBoxGoGoMinions.isChecked():
                                         bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
                                     else:
                                         bat_file.write(os.path.dirname(__file__) + "\\orto.exe -def " + self.dlg.outDir.text() + "\\" + ImageID + ".def\n")
-                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\DTM_" + ImageID + "*\n")
-                                    if self.dlg.radioButton_typ_rgb.isChecked():
-                                        TYP = "RGB"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
-                                    elif self.dlg.radioButton_typ_cir.isChecked():
-                                        TYP = "CIR"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName.replace(".tif", "_cir.tif") + " " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_cir.tif") + "\n")
-                                    elif self.dlg.radioButton_typ_both.isChecked():
-                                        TYP = "BOTH"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName.replace(".tif", "_cir.tif") + " " + self.dlg.outDir.text() + "\\" + OName.replace(".tif", "_cir.tif") + "\n")
-                                    else:
-                                        TYP = "COMBI"
-                                        bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
-                                    
+                                    bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\DTM_" + ImageID + ".*\n")
+                                    bat_file.write("gdal_translate -b 1 -b 2 -b 3 -a_srs EPSG:25832 -of GTIFF -co COMPRESS=JPEG -co JPEG_QUALITY=85 -co PHOTOMETRIC=YCBCR -co TILED=YES " + self.dlg.lineEdit_workdir.text() + "\\" + OName + " " + self.dlg.outDir.text() + "\\" + OName + "\n")
                                     if self.dlg.checkBoxDelTiff.isChecked():
-                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + "*\n")
+                                        bat_file.write("del " + (self.dlg.lineEdit_workdir.text()).replace('/', '\\') + "\\O" + ImageID + ".*\n")
 
 
 
 
                             # *** write DEF file ***
-                            rs.createDef(defName, imgpath, DEMpath, ortName, IO, EO, Polyg, RES, TYP)
+                            rs.createDef(defName, imgpath, DEMpath, ortName, IO, EO, Polyg, RES)
                             if self.dlg.checkBoxGoGoMinions.isChecked():
-                                #rs.MinionManager('quick_orto', orto_batfil, CHKuser, BoBox)
-                                rs.MinionManager('orto_ml', orto_batfil, CHKuser, BoBox)
+                                rs.MinionManager('Orto', orto_batfil, CHKuser, BoBox)
 
                         if self.dlg.checkBoxCreateVRT.isChecked():
                             with open(self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat", "a") as bat_file:
@@ -710,8 +589,6 @@ class OrthoMaker:
                         if self.dlg.checkBoxGoGoMinions.isChecked():
                             QMessageBox.information(None, "Status", "Ortho photo def-files have been added to GRU's jobque. \n\n You can follow the progress on Skynet.")
                         else:
-                            #QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
-                            QMessageBox.information(None, "Status",f"DEF and Batfile created. \n\nPlease run {self.dlg.lineEdit_workdir.text()}\\{self.dlg.inShapeA.currentText()}.bat from a OSGEO4W shell")
-                            #QMessageBox.information(None, "status", f"Inner orientations found in table: {inner_ori_table}\n\nFound other directions than T: {dir_not_T}")
+                            QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
 
                 pass

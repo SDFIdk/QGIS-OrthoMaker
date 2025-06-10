@@ -353,40 +353,7 @@ class OrthoMaker:
                                 #coneID = '0'
                                 #/Fusk
                             print (cameraID +' ' + coneID + ' ' + imageDate)
-                            
-                            if self.dlg.checkBox_io_camera.isChecked():
-                                # Use camera calibration file
-                                try:
-                                    IO = rs.getIO(cameraID, coneID, imageDate)
-                                except:
-                                    QMessageBox.information(None, "ERROR", f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                                    raise Exception(f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
-                            else:
-                                try:
-                                    #CamRot = 270
-                                    if feat["mount_rotation"] is None:
-                                        CamRot = 270  # Default is typically 270 degrees
-                                    else:
-                                        CamRot = feat["mount_rotation"]
-                                    #CamRot = 270
-                                    c = feat["focal_length"] * (-1)  # 100.5
-                                    pix = feat["pixel_size"]/1000 # 0.006
-                                    dimXi = (feat["image_format_x"]*pix/2)*-1 # -34.008
-                                    dimYi = (feat["image_format_y"]*pix/2)*-1 # -52.026
-                                    xx0i = feat["x_ppa"] # (-18)
-                                    yy0i = feat["y_ppa"] # (0)
-
-                                    dimX = dimXi
-                                    dimY = dimYi
-                                    xx0 = xx0i
-                                    yy0 = yy0i
-
-                                    IO = [xx0,yy0,c,pix,dimX,dimY,CamRot]
-                                    inner_ori_table = True
-                                except:
-                                    QMessageBox.information(None, "ERROR", "Filen mangler en eller flere IO parametre")
-                                    raise Exception("Filen mangler en eller flere IO parametre")
-                            
+                            IO = rs.getIO(cameraID, coneID,imageDate)
                             pix = IO[3]
                             dimX = IO[4]*-2/pix
                             dimY = IO[5]*-2/pix
@@ -401,7 +368,7 @@ class OrthoMaker:
 
 
                             EO = [X0, Y0, Z0, Ome, Phi, Kap]
-                            #QMessageBox.information(None, "status", f"EO is {EO}\nIO is {IO}")
+                            QMessageBox.information(None, "status", f"EO is {EO}\nIO is {IO}")
                             # QO footprint
                             if self.dlg.checkBox_bbox.isChecked():
                                 #QMessageBox.information(None, "Settings","benytter footprint shp")
@@ -533,19 +500,7 @@ class OrthoMaker:
                                     #    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
                                     
                                     #always fix jpeg, also in tiffjpeg
-
-                                    nadir = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-                                    oblique = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-
-                                    try:
-                                        direction = feat["direction"]
-                                        QMessageBox.information(None, "status", f"Direction was: {direction}")
-                                        if direction == 'T':
-                                            bat_file.write(nadir) ## If the table contain direction attribute and if it is nadir, then write 4 bands
-                                        else:
-                                             bat_file.write(oblique) ## If the table contain direction attribute and if it is different than nadir, then only write 3 bands
-                                    except:
-                                        bat_file.write(nadir) ## If the table does not contain direction attribute, we assume the image has 4 bands..
+                                    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif  -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n") 
 
                                     bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
                                     if self.dlg.radioButton_typ_rgb.isChecked():
@@ -638,20 +593,7 @@ class OrthoMaker:
                                     #if (((os.path.splitext(str(feat[self.dlg.inField1.currentText()]))[1]).lower() == '.jpg')):
                                     #    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
                                     #always fix jpeg, also in tiffjpeg
-
-                                    nadir = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-                                    oblique = 'gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -co tiled=yes -co blockxsize=256 -co blockysize=256\n"
-
-                                    try:
-                                        direction = feat["direction"]
-                                        #QMessageBox.information(None, "status", f"Direction was: {direction}")
-                                        if direction == 'T':
-                                            bat_file.write(nadir) ## If the table contain direction attribute and if it is nadir, then write 4 bands
-                                        else:
-                                             bat_file.write(oblique) ## If the table contain direction attribute and if it is different than nadir, then only write 3 bands
-                                    except:
-                                        bat_file.write(nadir) ## If the table does not contain direction attribute, we assume the image has 4 bands..
-                                    #bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif -b 1 -b 2 -b 3 -b 4 -co tiled=yes -co blockxsize=256 -co blockysize=256\n")
+                                    bat_file.write('gdal_translate -of GTiff ' + str(feat[self.dlg.inField1.currentText()]) + ' ' + self.dlg.lineEdit_workdir.text() + "\\DTM_" + ImageID + ".tif\n")
 
                                     if self.dlg.checkBoxGoGoMinions.isChecked():
                                         bat_file.write("C:\\dev\\COWS\\orto.exe -def " + defName + "\n")
@@ -710,8 +652,6 @@ class OrthoMaker:
                         if self.dlg.checkBoxGoGoMinions.isChecked():
                             QMessageBox.information(None, "Status", "Ortho photo def-files have been added to GRU's jobque. \n\n You can follow the progress on Skynet.")
                         else:
-                            #QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
-                            QMessageBox.information(None, "Status",f"DEF and Batfile created. \n\nPlease run {self.dlg.lineEdit_workdir.text()}\\{self.dlg.inShapeA.currentText()}.bat from a OSGEO4W shell")
-                            #QMessageBox.information(None, "status", f"Inner orientations found in table: {inner_ori_table}\n\nFound other directions than T: {dir_not_T}")
+                            QMessageBox.information(None, "Status","DEF and Batfile created. \n\nPlease run " + self.dlg.lineEdit_workdir.text() + "\\" + self.dlg.inShapeA.currentText() + ".bat from a OSGEO4W shell")
 
                 pass
