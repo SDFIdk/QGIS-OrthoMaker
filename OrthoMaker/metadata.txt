@@ -6,7 +6,7 @@
 name=Ortho Maker
 qgisMinimumVersion=3.0
 description=Pluginn for making ortho photos
-version=1.0.1
+version=1.0.2
 author=Andrew Flatman / Danish Mapping Agency
 email=anfla@sdfe.dk
 
