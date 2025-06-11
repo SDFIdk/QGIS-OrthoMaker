@@ -359,16 +359,18 @@ class OrthoMaker:
                                 try:
                                     IO = rs.getIO(cameraID, coneID, imageDate)
                                 except:
-                                    QMessageBox.information(None, "ERROR", f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
+                                    QMessageBox.information(None, "Status", f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
                                     raise Exception(f"Kamera {cameraID} pg cone {coneID} findes ikke i Skynet..")
                             else:
                                 try:
-                                    #CamRot = 270
-                                    if feat["mount_rotation"] is None:
-                                        CamRot = 270  # Default is typically 270 degrees
+
+                                    CamRot = feat["mount_rotation"]
+                                    if isinstance(CamRot, float) or isinstance(CamRot, int):
+                                        CamRot = CamRot
                                     else:
-                                        CamRot = feat["mount_rotation"]
-                                    #CamRot = 270
+                                        CamRot = 270
+                                    #QMessageBox.information(None, "Status", f"mount_rotation is {CamRot}")
+
                                     c = feat["focal_length"] * (-1)  # 100.5
                                     pix = feat["pixel_size"]/1000 # 0.006
                                     dimXi = (feat["image_format_x"]*pix/2)*-1 # -34.008
@@ -384,7 +386,7 @@ class OrthoMaker:
                                     IO = [xx0,yy0,c,pix,dimX,dimY,CamRot]
                                     inner_ori_table = True
                                 except:
-                                    QMessageBox.information(None, "ERROR", "Filen mangler en eller flere IO parametre")
+                                    QMessageBox.information(None, "Status", "Filen mangler en eller flere IO parametre")
                                     raise Exception("Filen mangler en eller flere IO parametre")
                             
                             pix = IO[3]
